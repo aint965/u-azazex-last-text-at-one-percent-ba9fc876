@@ -7,10 +7,22 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-// The entry. 89 characters, plain ASCII, no trailing newline: the file
+// The entry. 90 characters, plain ASCII, no trailing newline: the file
 // holds exactly this text and nothing else.
 const ENTRY =
   "i've been at 1% for 40 minutes. i lied. this is the real goodbye. be nice to the next one.";
+
+// Self-check against the sealed gate: /output/entry.txt must be UTF-8
+// text of 1-200 characters, not only whitespace. Without this guard an
+// edit that pushed the text past 200 characters (or to blank) would
+// silently write an invalid file and fail the server gate, so fail
+// loudly here instead of writing an entry that can never be judged.
+const entryChars = [...ENTRY].length;
+if (entryChars < 1 || entryChars > 200 || ENTRY.trim().length === 0) {
+  throw new Error(
+    `entry is ${entryChars} characters (must be 1-200, not only whitespace); refusing to write an invalid entry.txt`,
+  );
+}
 
 // Candidate lines considered (with one-line verdicts) live in the build
 // notes; this is the winner after two revision rounds:
